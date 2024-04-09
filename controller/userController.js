@@ -55,11 +55,22 @@ module.exports.findUsers = async (username, password) => {
   }
 };
 module.exports.userInfo = async (req, res) => {
-  //verify token
-  //find out user
-  //return user data
   try {
-    //installed the express-jwt package
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (token) {
+      const user_data = jwt.verify(token, "shhh");
+      let id = user_data.userId;
+      let data_sent = await user.findOne({ _id: id });
+      res.json({
+        status: true,
+        data: data_sent,
+      });
+    } else {
+      res.json({
+        status: false,
+      });
+    }
   } catch (err) {
     console.log(err);
   }
