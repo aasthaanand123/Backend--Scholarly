@@ -5,8 +5,8 @@ const jwt = require("jsonwebtoken");
 module.exports.addUser = async (req, res) => {
   try {
     let data = req.body;
-    let user = findUser(data.email, data.password);
-    if (user) res.json({ status: "already exists" });
+    let users = this.findUsers(data.email, data.password);
+    if (users.length > 0) res.json({ status: "already exists" });
     let sign_up = await user.create({
       name: {
         first: data.firstName,
@@ -29,11 +29,12 @@ module.exports.addUser = async (req, res) => {
 module.exports.signInUser = async (req, res) => {
   try {
     const { username, password } = req.body;
-    const user = findUser(username, password);
-    if (!user)
+    const users = await this.findUsers(username, password);
+    if (users.length == 0) {
       return res.status(401).json({ message: "Invalid username or password" });
+    }
     const token = jwt.sign(
-      { userId: user.id, username: user.username },
+      { userId: users[0]._id, username: users[0].username },
       "shhh"
     );
     res.json({ token: token });
@@ -42,10 +43,23 @@ module.exports.signInUser = async (req, res) => {
   }
 };
 //find a user
-module.exports.findUser = async (username, password) => {
+module.exports.findUsers = async (username, password) => {
   try {
-    let user = await user.findOne({ username: username, password: password });
-    return user;
+    let user_details = await user.find({
+      username: username,
+      password: password,
+    });
+    return user_details;
+  } catch (err) {
+    console.log(err);
+  }
+};
+module.exports.userInfo = async (req, res) => {
+  //verify token
+  //find out user
+  //return user data
+  try {
+    //installed the express-jwt package
   } catch (err) {
     console.log(err);
   }
