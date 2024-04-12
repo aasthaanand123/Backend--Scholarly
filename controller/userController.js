@@ -75,3 +75,42 @@ module.exports.userInfo = async (req, res) => {
     console.log(err);
   }
 };
+module.exports.updateuserInfo = async (req, res) => {
+  try {
+    let data = req.body;
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    if (token) {
+      const user_data = jwt.verify(token, "shhh");
+      let id = user_data.userId;
+      let data_sent = await user.updateOne(
+        { _id: id },
+        {
+          $set: {
+            name: {
+              first: data.firstName,
+              last: data.lastName,
+            },
+            password: data.password,
+            email: data.email,
+            percentage10th: data.percentage10th,
+            percentage12th: data.percentage12th,
+            ugDegree: data.ugDegree,
+            percentageUg: data.percentageUg,
+            intendedDegree: data.intendedDegree,
+          },
+        }
+      );
+      res.json({
+        status: true,
+        data: data_sent,
+      });
+    } else {
+      res.json({
+        status: false,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
