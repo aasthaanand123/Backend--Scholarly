@@ -1,6 +1,8 @@
 const express = require("express");
 const user = require("../models/user");
 const jwt = require("jsonwebtoken");
+const cheerio = require("cheerio");
+const axios = require("axios");
 // add a user to database
 module.exports.addUser = async (req, res) => {
   try {
@@ -110,6 +112,44 @@ module.exports.updateuserInfo = async (req, res) => {
         status: false,
       });
     }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+async function fetchHTML(url) {
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+}
+
+async function scrapeData(url, field) {
+  try {
+    const html = await fetchHTML(url);
+    if (!html) return;
+    let data = [];
+    const $ = cheerio.load(html);
+
+    //send an object from here containing different fields in the scholarship
+    $(".right").each((index, element) => {
+      data.push($(element).text());
+    });
+
+    return data;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+module.exports.scholarshipsData = async (request, response) => {
+  try {
+    let { url, field } = request.body;
+    let resp_data = await scrapeData(url, field);
+    response.json(resp_data);
   } catch (err) {
     console.log(err);
   }
