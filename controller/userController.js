@@ -127,28 +127,74 @@ async function fetchHTML(url) {
   }
 }
 
-async function scrapeData(url, field) {
+async function scrapeData(url) {
   try {
     const html = await fetchHTML(url);
     if (!html) return;
     let data = [];
     const $ = cheerio.load(html);
-
     //send an object from here containing different fields in the scholarship
     $(".right").each((index, element) => {
-      data.push($(element).text());
+      let list_links = [];
+      $(element)
+        .find(".skills li")
+        .each((index, el) => {
+          list_links.push($(el).text());
+        });
+      let curr_obj = {
+        heading: "",
+        heading_link: "",
+        links: list_links,
+        content: "",
+      };
+      curr_obj.heading = $(element).find("h3").text();
+      curr_obj.content = $(element).find("p").find("span").text();
+      if (!curr_obj.content.trim()) {
+        curr_obj.content = $(element).find("p").text();
+      }
+      data.push(curr_obj);
     });
-
+    let counter = 0;
+    $(".resume-item").each((index, element) => {
+      let img_url = $(element).find("a").find("img").attr("src");
+      data[counter].img_url = img_url;
+      counter++;
+    });
     return data;
   } catch (err) {
     console.log(err);
   }
 }
 
+async function scrapeAllScholarships(baseUrl) {
+  try {
+    let allScholarships = [];
+    let page = 1;
+    let hasNextPage = true;
+
+    while (hasNextPage && page < 10) {
+      const url = `${baseUrl}&page=${page}`;
+      const scholarships = await scrapeData(url);
+
+      if (scholarships && scholarships.length === 0) {
+        hasNextPage = false;
+      } else {
+        allScholarships = allScholarships.concat(scholarships);
+        page++;
+      }
+    }
+
+    return allScholarships;
+  } catch (error) {
+    console.error("Error:", error);
+    return [];
+  }
+}
+
 module.exports.scholarshipsData = async (request, response) => {
   try {
-    let { url, field } = request.body;
-    let resp_data = await scrapeData(url, field);
+    let { url } = request.body;
+    let resp_data = await scrapeAllScholarships(url);
     response.json(resp_data);
   } catch (err) {
     console.log(err);
