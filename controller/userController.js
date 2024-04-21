@@ -227,6 +227,9 @@ async function scrapeIndividual(url) {
       let data = $(element).text();
       arr.push(data);
     });
+    arr.pop();
+    let official_link = $(".job-overview").find("li").find("a").attr("href");
+    arr.push(`Official Link: ${official_link}`);
     leftData.heading = heading;
     leftData.imgUrl = img_url;
     leftData.description = description;
@@ -234,7 +237,6 @@ async function scrapeIndividual(url) {
     leftData.status = status;
     leftData.link = link;
     leftData.overview = arr;
-    // extract official link for scholarship
     return leftData;
   } catch (err) {
     console.log(err);
