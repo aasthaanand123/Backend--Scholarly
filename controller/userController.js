@@ -200,3 +200,53 @@ module.exports.scholarshipsData = async (request, response) => {
     console.log(err);
   }
 };
+
+// individual scholarship
+async function scrapeIndividual(url) {
+  try {
+    let html = await fetchHTML(url);
+    if (!html) return;
+    let leftData = {
+      heading: "",
+      imgUrl: "",
+      description: "",
+      markers: "",
+      status: "",
+      link: "",
+      overview: [],
+    };
+    const $ = cheerio.load(html);
+    let heading = $("h1").text();
+    let img_url = $(".company-logo").find("img").attr("src");
+    let description = $("div.job-details-body").find("p").text().trim();
+    let markers = $(".content").find(".mt-2").text();
+    let status = $(".salary-type").find("span.sc-active").text();
+    let link = $(".salary-range").find("a.whatsapp-share").attr("href");
+    let arr = [];
+    let overview = $(".job-overview li").each((index, element) => {
+      let data = $(element).text();
+      arr.push(data);
+    });
+    leftData.heading = heading;
+    leftData.imgUrl = img_url;
+    leftData.description = description;
+    leftData.markers = markers;
+    leftData.status = status;
+    leftData.link = link;
+    leftData.overview = arr;
+    // extract official link for scholarship
+    return leftData;
+  } catch (err) {
+    console.log(err);
+  }
+}
+module.exports.sendscholarshipData = async (req, res) => {
+  try {
+    let params = req.body;
+    let url = `https://scholarshipforme.com/scholarships/${params.heading}`;
+    let data = await scrapeIndividual(url);
+    res.json(data);
+  } catch (err) {
+    console.log(err);
+  }
+};

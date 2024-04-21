@@ -6,4 +6,5 @@ router.post("/sign-in", usercontroller.signInUser);
 router.post("/user-info", usercontroller.userInfo);
 router.post("/update_user-info", usercontroller.updateuserInfo);
 router.post("/all-scholarships", usercontroller.scholarshipsData);
+router.post("/individual-scholarship", usercontroller.sendscholarshipData);
 module.exports = router;
