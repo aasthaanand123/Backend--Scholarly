@@ -21,6 +21,15 @@ const userSchema = new Schema({
   percentageUg: Number,
   ugDegree: String,
   intendedDegree: String,
+  Scholarships: [
+    {
+      title: String,
+      status: {
+        applied: Boolean,
+        saved: Boolean,
+      },
+    },
+  ],
 });
 
 module.exports = mongoose.model("user", userSchema);

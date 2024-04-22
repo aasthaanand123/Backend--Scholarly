@@ -7,4 +7,7 @@ router.post("/user-info", usercontroller.userInfo);
 router.post("/update_user-info", usercontroller.updateuserInfo);
 router.post("/all-scholarships", usercontroller.scholarshipsData);
 router.post("/individual-scholarship", usercontroller.sendscholarshipData);
+router.post("/find-status", usercontroller.find_status);
+router.post("/change_status", usercontroller.change_status);
+router.get("/getPopular", usercontroller.getPopular);
 module.exports = router;

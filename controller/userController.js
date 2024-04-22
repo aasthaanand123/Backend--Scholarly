@@ -21,6 +21,7 @@ module.exports.addUser = async (req, res) => {
       percentageUg: data.percentageUg,
       ugDegree: data.ugDegree,
       intendedDegree: data.intendedDegree,
+      Scholarships: [],
     });
     res.json({ status: "success" });
   } catch (err) {
@@ -247,6 +248,129 @@ module.exports.sendscholarshipData = async (req, res) => {
     let params = req.body;
     let url = `https://scholarshipforme.com/scholarships/${params.heading}`;
     let data = await scrapeIndividual(url);
+    res.json(data);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+module.exports.find_status = async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    let { heading } = req.body;
+    heading = heading
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .toLowerCase()
+      .split(" ")
+      .join("-");
+    const token = authHeader && authHeader.split(" ")[1];
+    if (token) {
+      const user_data = jwt.verify(token, "shhh");
+      let id = user_data.userId;
+      let data_sent = await user.findOne({ _id: id });
+      let scholarship = null;
+      if (data_sent.Scholarships.length > 0) {
+        scholarship = data_sent.Scholarships.find((scholarship) => {
+          return scholarship.title == heading;
+        });
+      }
+      let status = { applied: false, saved: false };
+      if (scholarship) {
+        status = scholarship.status;
+      }
+      res.json({ status: status });
+    } else {
+      res.json({
+        status: { applied: false, saved: false },
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+module.exports.change_status = async (req, res) => {
+  try {
+    let header = req.headers["authorization"];
+    let data = req.body;
+    let token = header && header.split(" ")[1];
+    if (token) {
+      const user_data = jwt.verify(token, "shhh");
+      let id = user_data.userId;
+      let data_sent = await user.findOne({ _id: id });
+      data.title = data.title
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .toLowerCase()
+        .split(" ")
+        .join("-");
+      let existingScholarshipIndex = data_sent.Scholarships.findIndex(
+        (scholarship) => scholarship.title === data.title
+      );
+
+      if (existingScholarshipIndex !== -1) {
+        data_sent.Scholarships[existingScholarshipIndex].status = data.status;
+        await data_sent.save();
+      } else {
+        data_sent.Scholarships.push({
+          title: data.title,
+          status: data.status,
+        });
+        await data_sent.save();
+      }
+
+      res.json({
+        status: "success",
+      });
+    } else {
+      res.json({
+        status: "no token",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
+//scrape popular
+async function scrapePopular() {
+  try {
+    let data = await fetchHTML("https://scholarshipforme.com");
+    const $ = cheerio.load(data);
+    let complete = [];
+    //scraping popular scholarships: issue
+    $("#scholarship_list.row").each((index, element) => {
+      let title = $(element)
+        .find(".col-lg-10.offset-lg-1.col-12")
+        .find(".single-job .job-content h4 a")
+        .text()
+        .trim();
+      console.log(title);
+      let location = $(element)
+        .find(".col-lg-10.offset-lg-1.col-12")
+        .find(".single-job")
+        .text()
+        .trim();
+
+      let status = $(element)
+        .find(".col-lg-10.offset-lg-1.col-12")
+        .find(".single-job .job-content h4 span small .sc-active")
+        .text()
+        .trim();
+      complete.push({ title: title, state: location, status: status });
+    });
+
+    console.log(complete);
+    return complete;
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+//controller function for popular scholarships
+module.exports.getPopular = async (req, res) => {
+  try {
+    let data = await scrapePopular();
     res.json(data);
   } catch (err) {
     console.log(err);
