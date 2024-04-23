@@ -3,6 +3,7 @@ const user = require("../models/user");
 const jwt = require("jsonwebtoken");
 const cheerio = require("cheerio");
 const axios = require("axios");
+const puppeteer = require("puppeteer");
 // add a user to database
 module.exports.addUser = async (req, res) => {
   try {
@@ -332,36 +333,38 @@ module.exports.change_status = async (req, res) => {
     console.log(err);
   }
 };
-//scrape popular
-async function scrapePopular() {
+//scrape popular scholarships using puppeteer
+async function scrapePopularScholarships() {
   try {
-    let data = await fetchHTML("https://scholarshipforme.com");
-    const $ = cheerio.load(data);
-    let complete = [];
-    //scraping popular scholarships: issue
-    $("#scholarship_list.row").each((index, element) => {
-      let title = $(element)
-        .find(".col-lg-10.offset-lg-1.col-12")
-        .find(".single-job .job-content h4 a")
-        .text()
-        .trim();
-      console.log(title);
-      let location = $(element)
-        .find(".col-lg-10.offset-lg-1.col-12")
-        .find(".single-job")
-        .text()
-        .trim();
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto("https://scholarshipforme.com");
 
-      let status = $(element)
-        .find(".col-lg-10.offset-lg-1.col-12")
-        .find(".single-job .job-content h4 span small .sc-active")
-        .text()
-        .trim();
-      complete.push({ title: title, state: location, status: status });
+    // Wait for the scholarships to be loaded
+    await page.waitForSelector(".single-job");
+
+    // Extract scholarship data
+    const scholarships = await page.evaluate(() => {
+      const scholarshipsData = [];
+      const scholarshipsElements = document.querySelectorAll(".single-job");
+
+      scholarshipsElements.forEach((element) => {
+        const title = element
+          .querySelector(".job-content h4 a")
+          .innerText.trim();
+        const status = element.querySelector(".sc-active").innerText.trim();
+        const state = element
+          .querySelector(".job-content i.lni-map-marker")
+          .nextSibling.textContent.trim();
+
+        scholarshipsData.push({ title, status, state });
+      });
+
+      return scholarshipsData;
     });
 
-    console.log(complete);
-    return complete;
+    await browser.close();
+    return scholarships;
   } catch (err) {
     console.log(err);
   }
@@ -370,8 +373,15 @@ async function scrapePopular() {
 //controller function for popular scholarships
 module.exports.getPopular = async (req, res) => {
   try {
-    let data = await scrapePopular();
-    res.json(data);
+    let data = await scrapePopularScholarships();
+    //send only six
+    let main = [];
+    let i = 0;
+    while (i < 6) {
+      main.push(data[i]);
+      i += 1;
+    }
+    res.json(main);
   } catch (err) {
     console.log(err);
   }
