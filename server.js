@@ -10,7 +10,7 @@ app.use(express.json()); //for json payloads to javascript objects in req.body
 app.use(express.urlencoded({ extended: true })); //from form data payloads to javascript objects in req.body
 app.use("/", routes);
 const encodedPassword = encodeURIComponent("TheWeeknd8@");
-const connectionString = `mongodb+srv://aasthaanand193:${encodedPassword}@cluster0.ypzqisu.mongodb.net/Scholarly?retryWrites=true&w=majority`;
+const connectionString = `mongodb+srv://aasthaanand193:${encodedPassword}@cluster0.lmmqyju.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0/`;
 mongoose.connect(connectionString).then(
   app.listen(port, () => {
     console.log(`server is started at http://localhost:${port}`);

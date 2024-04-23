@@ -32,8 +32,8 @@ module.exports.addUser = async (req, res) => {
 //sign in, send a jwt token to client
 module.exports.signInUser = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const users = await this.findUsers(username, password);
+    const { email, password } = req.body;
+    const users = await this.findUsers(email, password);
     if (users.length == 0) {
       return res.status(401).json({ message: "Invalid username or password" });
     }
@@ -50,7 +50,7 @@ module.exports.signInUser = async (req, res) => {
 module.exports.findUsers = async (username, password) => {
   try {
     let user_details = await user.find({
-      username: username,
+      email: username,
       password: password,
     });
     return user_details;
